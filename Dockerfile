@@ -1,27 +1,29 @@
 # Using OpenJDK 8
-FROM broadinstitute/gatk:gatkbase-1.2.3
-ARG DRELEASE
+FROM broadinstitute/gatk:gatkbase-1.2.4-testA
+ARG ZIPPATH
 
-ADD . /gatk
+ADD $ZIPPATH /gatk
 
 WORKDIR /gatk
-RUN /gatk/gradlew clean compileTestJava sparkJar localJar condaEnvironmentDefinition -Drelease=$DRELEASE
+RUN ln -s /gatk/$( find . -name "gatk*local.jar" ) gatk.jar
+RUN ln -s /gatk/$( find . -name "gatk*spark.jar" ) gatk-spark.jar
+# RUN /gatk/gradlew clean compileTestJava sparkJar localJar condaEnvironmentDefinition -Drelease=$DRELEASE
 
 WORKDIR /root
 
 # Make sure we can see a help message
-RUN ln -sFv /gatk/build/libs/gatk.jar
-RUN java -jar gatk.jar -h
+RUN ln -sFv /gatk/gatk.jar
+RUN mkdir /gatksrc
+RUN mkdir .gradle
 
 #Setup test data
 WORKDIR /gatk
-# Create link to where test data is expected
-RUN ln -s /testdata src/test/resources
 
 # Create a simple unit test runner
 ENV CI true
 RUN echo "source activate gatk" > /root/run_unit_tests.sh && \
-    echo "cd /gatk/ && ./gradlew jacocoTestReport" >> /root/run_unit_tests.sh
+    echo "export DOCKER_TEST=\"true\"" >> /root/run_unit_tests.sh && \
+    echo "cd /gatk/ && /gatksrc/gradlew jacocoTestReport -a -p /gatksrc " >> /root/run_unit_tests.sh
 
 WORKDIR /root
 RUN cp -r /root/run_unit_tests.sh /gatk
@@ -40,13 +42,14 @@ RUN mkdir $DOWNLOAD_DIR && \
     bash $DOWNLOAD_DIR/miniconda.sh -p $CONDA_PATH -b && \
     rm $DOWNLOAD_DIR/miniconda.sh
 ENV PATH $CONDA_PATH/envs/gatk/bin:$CONDA_PATH/bin:$PATH
+RUN mv /gatk/gatkcondaenv.yml /gatk/scripts
 WORKDIR /gatk/build
-RUN conda env create -n gatk -f gatkcondaenv.yml && \
+RUN conda-env create -n gatk -f gatkcondaenv.yml && \
     echo "source activate gatk" >> /gatk/gatkenv.rc
-WORKDIR /gatk
 
 CMD ["bash", "--init-file", "/gatk/gatkenv.rc"]
 
+RUN conda clean -y -all
 # End GATK Python environment
 
 WORKDIR /gatk
