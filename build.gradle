@@ -403,9 +403,9 @@ test {
 
     /**
      * Valid options for TEST_TYPE are:
-     * cloud, integration, unit  : run one of the three disjoint partitions of the test suite
-     * all                       : run all the tests
-     * anything else             : run the non-cloud tests
+     * cloud, integration, unit, spark, python, bucket, funcotatorValidation  : run one of the several disjoint partitions of the test suite
+     * all                                                                    : run all the tests
+     * anything else                                                          : run the non-cloud tests
      */
     String TEST_TYPE = "$System.env.TEST_TYPE"
 
@@ -527,8 +527,13 @@ task sparkJar(type: ShadowJar) {
     }
 }
 
+task testJar(type: Jar, dependsOn: testClasses) {
+    classifier = 'tests'
+    from sourceSets.test.output
+}
+
 task bundle(type: Zip) {
-    dependsOn shadowJar, sparkJar, 'condaEnvironmentDefinition', 'gatkTabComplete', 'gatkDoc'
+    dependsOn shadowJar, sparkJar, testJar, 'condaEnvironmentDefinition', 'gatkTabComplete', 'gatkDoc'
 
     doFirst {
         assert file("gatk").exists()
@@ -543,6 +548,7 @@ task bundle(type: Zip) {
 
     from(shadowJar.archivePath)
     from(sparkJar.archivePath)
+    from(testJar.archivePath)
     from("gatk")
     from("README.md")
     from("$docBuildDir/tabCompletion/gatk-completion.sh")
