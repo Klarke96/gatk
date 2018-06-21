@@ -14,7 +14,6 @@ WORKDIR /root
 # Make sure we can see a help message
 RUN ln -sFv /gatk/gatk.jar
 RUN mkdir /gatksrc
-RUN mkdir /gatk/scripts
 RUN mkdir /jars
 RUN mkdir .gradle
 
@@ -48,7 +47,7 @@ RUN mkdir $DOWNLOAD_DIR && \
     bash $DOWNLOAD_DIR/miniconda.sh -p $CONDA_PATH -b && \
     rm $DOWNLOAD_DIR/miniconda.sh
 ENV PATH $CONDA_PATH/envs/gatk/bin:$CONDA_PATH/bin:$PATH
-RUN mv /gatksrc/gatkcondaenv.yml /gatk/scripts
+RUN mv /gatk/gatkcondaenv.yml /gatk/scripts
 WORKDIR /gatk/build
 RUN conda-env create -n gatk -f gatkcondaenv.yml && \
     echo "source activate gatk" >> /gatk/gatkenv.rc && \
