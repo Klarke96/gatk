@@ -174,19 +174,6 @@ configurations.all {
     all*.exclude group: 'junit', module: 'junit'
 }
 
-
-jacocoTestReport {
-    dependsOn testOnShadowJar
-    group = "Reporting"
-    description = "Generate Jacoco coverage reports after running tests."
-    additionalSourceDirs = files(sourceSets.main.allJava.srcDirs)
-
-    reports {
-        xml.enabled = true
-        html.enabled = true
-    }
-}
-
 //task jacocoTestReportOnShadowJar(type: jacocoTestReport) {
 //    dependsOn testOnShadowJar
 //    group = "Reporting"
@@ -655,6 +642,18 @@ task bundle(type: Zip) {
 
     doLast {
         logger.lifecycle("Created GATK distribution in ${destinationDir}/${archiveName}")
+    }
+}
+
+jacocoTestReport {
+    dependsOn testOnShadowJar
+    group = "Reporting"
+    description = "Generate Jacoco coverage reports after running tests."
+    additionalSourceDirs = files(sourceSets.main.allJava.srcDirs)
+
+    reports {
+        xml.enabled = true
+        html.enabled = true
     }
 }
 
