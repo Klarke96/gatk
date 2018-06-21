@@ -13,7 +13,7 @@ WORKDIR /root
 
 # Make sure we can see a help message
 RUN ln -sFv /gatk/gatk.jar
-RUN mkdir -r /gatksrc
+RUN mkdir /gatksrc
 RUN mkdir /jars
 RUN mkdir .gradle
 

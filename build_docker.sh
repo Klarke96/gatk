@@ -119,8 +119,8 @@ unzip -j ${ZIPPATHGATK} -d ./unzippedJar
 unzip -o -j ${ZIPPATHPYTHON} -d ./unzippedJar/scripts
 
 mkdir ${STAGING_ABSOLUTE_PATH}/testJars
-mv ./build/libs/$( find ./build/libs/ -name "gatk*test.jar" ) ${STAGING_ABSOLUTE_PATH}/testJars
-mv ./unzippedJar/$( find ./build/libs/ -name "gatk*testDependencies.jar" ) ${STAGING_ABSOLUTE_PATH}/testJars
+mv $( find ./build/libs/ -name "gatk*test.jar" ) ${STAGING_ABSOLUTE_PATH}/testJars
+mv $( find ./build/libs/ -name "gatk*testDependencies.jar" ) ${STAGING_ABSOLUTE_PATH}/testJars
 
 echo "Building image to tag ${REPO_PRJ}:${GITHUB_TAG}..."
 if [ -n "${IS_PUSH}" ]; then
