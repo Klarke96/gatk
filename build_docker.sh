@@ -112,15 +112,15 @@ if [ -n "${IS_PUSH}" ]; then
 else
     RELEASE=false
 fi
-./gradlew clean bundle createPythonPackageArchive -Drelease=$DRELEASE
+./gradlew clean bundle pythonPackageArchive shadowTestClassJar shadowTestJar -Drelease=$DRELEASE
 ZIPPATHGATK=$( find ./build -name "gatk-*.zip" )
 ZIPPATHPYTHON=$( find ./build -name "gatkPython*.zip" )
 unzip -j ${ZIPPATHGATK} -d ./unzippedJar
 unzip -o -j ${ZIPPATHPYTHON} -d ./unzippedJar/scripts
 
 mkdir ${STAGING_ABSOLUTE_PATH}/testJars
-mv ./unzippedJar/$( find ./unzippedJar -name "gatk*test.jar" ) ${STAGING_ABSOLUTE_PATH}/testJars
-mv ./unzippedJar/$( find ./unzippedJar -name "gatk*testDependencies.jar" ) ${STAGING_ABSOLUTE_PATH}/testJars
+mv ./build/libs/$( find ./build/libs/ -name "gatk*test.jar" ) ${STAGING_ABSOLUTE_PATH}/testJars
+mv ./unzippedJar/$( find ./build/libs/ -name "gatk*testDependencies.jar" ) ${STAGING_ABSOLUTE_PATH}/testJars
 
 echo "Building image to tag ${REPO_PRJ}:${GITHUB_TAG}..."
 if [ -n "${IS_PUSH}" ]; then
@@ -143,7 +143,7 @@ if [ -z "${IS_NOT_RUN_UNIT_TESTS}" ] ; then
 
 	echo docker run ${REMOVE_CONTAINER_STRING} -v  ${STAGING_ABSOLUTE_PATH}/src/test/resources:/gatksrc/test/resources -t ${REPO_PRJ}:${GITHUB_TAG} bash /root/run_unit_tests.sh
 #	docker run ${REMOVE_CONTAINER_STRING} -v ${STAGING_ABSOLUTE_PATH}:/gatksrc -v ~/.gradle:/root/.gradle -t ${REPO_PRJ}:${GITHUB_TAG} bash /root/run_unit_tests.sh
-    docker run ${REMOVE_CONTAINER_STRING} -v  ${STAGING_ABSOLUTE_PATH}/src/test/resources:/gatksrc/test/resources -v  ${STAGING_ABSOLUTE_PATH}/testJars:/jars -t ${REPO_PRJ}:${GITHUB_TAG} bash /root/run_unit_tests.sh
+    docker run ${REMOVE_CONTAINER_STRING} -v  ${STAGING_ABSOLUTE_PATH}:/gatksrc -v  ${STAGING_ABSOLUTE_PATH}/testJars:/jars -t ${REPO_PRJ}:${GITHUB_TAG} bash /root/run_unit_tests.sh
 	echo " Unit tests passed..."
 fi
 

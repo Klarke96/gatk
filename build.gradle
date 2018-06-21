@@ -176,7 +176,7 @@ configurations.all {
 
 
 jacocoTestReport {
-    dependsOn test
+    dependsOn testOnShadowJar
     group = "Reporting"
     description = "Generate Jacoco coverage reports after running tests."
     additionalSourceDirs = files(sourceSets.main.allJava.srcDirs)
@@ -186,6 +186,18 @@ jacocoTestReport {
         html.enabled = true
     }
 }
+
+//task jacocoTestReportOnShadowJar(type: jacocoTestReport) {
+//    dependsOn testOnShadowJar
+//    group = "Reporting"
+//    description = "Generate Jacoco coverage reports after running tests."
+//    additionalSourceDirs = files(sourceSets.main.allJava.srcDirs)
+//
+//    reports {
+//        xml.enabled = true
+//        html.enabled = true
+//    }
+//}
 
 //NOTE: we ignore contracts for now
 compileJava {
@@ -612,7 +624,7 @@ task testOnShadowJar(type: Test){
 }
 
 task bundle(type: Zip) {
-    dependsOn shadowJar, sparkJar, shadowTestJar, shadowTestClassJar, 'condaEnvironmentDefinition', 'gatkTabComplete', 'gatkDoc'
+    dependsOn shadowJar, sparkJar,   'condaEnvironmentDefinition', 'gatkTabComplete', 'gatkDoc'
 
     doFirst {
         assert file("gatk").exists()

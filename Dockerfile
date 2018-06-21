@@ -13,7 +13,7 @@ WORKDIR /root
 
 # Make sure we can see a help message
 RUN ln -sFv /gatk/gatk.jar
-RUN mkdir -r /gatksrc/test/resources
+RUN mkdir -r /gatksrc
 RUN mkdir /jars
 RUN mkdir .gradle
 
@@ -26,7 +26,7 @@ RUN echo "source activate gatk" > /root/run_unit_tests.sh && \
     echo "export TEST_JAR=/jars/$( find /jars -name \"gatk*test.jar\" )" >> /root/run_unit_tests.sh && \
     echo "export TEST_DEPENDENCY_JAR=/jars/$( find /jars -name \"gatk*testDependencies.jar\" )" >> /root/run_unit_tests.sh && \
     echo "export GATK_JAR=gatk.jar" >> /root/run_unit_tests.sh && \
-    echo "cd /gatk/ && /gatksrc/gradlew jacocoTestReport -a -p /gatk --tests *HaplotypeCallerIntegrationTest" >> /root/run_unit_tests.sh
+    echo "cd /gatk/ && /gatksrc/gradlew jacocoTestReport -a -p /gatksrc --tests *HaplotypeCallerIntegrationTest" >> /root/run_unit_tests.sh
 
 #     echo "cd /gatk/ && /gatksrc/gradlew jacocoTestReport -a -p /gatksrc --stacktrace --debug  --tests *HaplotypeCallerIntegrationTest" >> /root/run_unit_tests.sh
 
