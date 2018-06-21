@@ -1,5 +1,5 @@
 # Using OpenJDK 8
-FROM broadinstitute/gatk:gatkbase-1.2.4-testA
+FROM broadinstitute/gatk:gatkbase-1.2.4
 ARG ZIPPATH
 
 ADD $ZIPPATH /gatk
@@ -13,7 +13,8 @@ WORKDIR /root
 
 # Make sure we can see a help message
 RUN ln -sFv /gatk/gatk.jar
-RUN mkdir /gatksrc
+RUN mkdir -r /gatksrc/test/resources
+RUN mkdir /jars
 RUN mkdir .gradle
 
 #Setup test data
@@ -22,8 +23,10 @@ WORKDIR /gatk
 # Create a simple unit test runner
 ENV CI true
 RUN echo "source activate gatk" > /root/run_unit_tests.sh && \
-    echo "export DOCKER_TEST=\"true\"" >> /root/run_unit_tests.sh && \
-    echo "cd /gatk/ && /gatksrc/gradlew jacocoTestReport -a -p /gatksrc " >> /root/run_unit_tests.sh
+    echo "export TEST_JAR=/jars/$( find /jars -name \"gatk*test.jar\" )" >> /root/run_unit_tests.sh && \
+    echo "export TEST_DEPENDENCY_JAR=/jars/$( find /jars -name \"gatk*testDependencies.jar\" )" >> /root/run_unit_tests.sh && \
+    echo "export GATK_JAR=gatk.jar" >> /root/run_unit_tests.sh && \
+    echo "cd /gatk/ && /gatksrc/gradlew jacocoTestReport -a -p /gatk --tests *HaplotypeCallerIntegrationTest" >> /root/run_unit_tests.sh
 
 #     echo "cd /gatk/ && /gatksrc/gradlew jacocoTestReport -a -p /gatksrc --stacktrace --debug  --tests *HaplotypeCallerIntegrationTest" >> /root/run_unit_tests.sh
 

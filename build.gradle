@@ -379,7 +379,6 @@ version = (isRelease ? gitVersion() : gitVersion() + "-SNAPSHOT").replaceAll(".d
 logger.info("build for version:" + version)
 group = 'org.broadinstitute'
 
-
 tasks.withType(Jar) {
     manifest {
         attributes 'Implementation-Title': 'The Genome Analysis Toolkit (GATK)',
@@ -391,13 +390,6 @@ tasks.withType(Jar) {
 }
 
 test {
-    String DOCKER_TEST = "$System.env.DOCKER_TEST"
-
-    if (DOCKER_TEST == "true"){
-        classpath = files("/gatk/gatk.jar", "/usr") + classpath
-        workingDir = file("/gatksrc/")
-    }
-    //classpath.each {println it }
     outputs.upToDateWhen { false }  //tests will never be "up to date" so you can always rerun them
     String TEST_VERBOSITY = "$System.env.TEST_VERBOSITY"
 
@@ -527,18 +519,100 @@ task sparkJar(type: ShadowJar) {
     }
 }
 
-task testJar(type: Jar, dependsOn: testClasses) {
-    classifier = 'tests'
-    dependencies {
-        compile "org.mockito:mockito-core:2.10.0"
-       ///compile "com.google.jimfs:jimfs:1.1"
+// A jar that only contains the test classes and resources (to be extracted for testing)
+task shadowTestClassJar(type: ShadowJar){
+    group = "Shadow"
+    from sourceSets.test.output
+    classifier = "test"
+}
+
+// A minimal jar that only contains the extra dependencies needed for running the tests
+task shadowTestJar(type: ShadowJar){
+    group = "Shadow"
+    from {
+        (configurations.testRuntime - configurations.runtime).collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
+    }
+    classifier = "testDependencies"
+}
+
+task unpackJar(type: Copy){
+    String testClassesJar = "$System.env.TEST_JAR"
+    print testClassesJar
+
+    if (testClassesJar != null){
+        from zipTree(testClassesJar)
+        into "testClasses"
+    }
+}
+
+task testOnShadowJar(type: Test){
+    String testClassesJar = "$System.env.TEST_JAR"
+    String testDependencyJar = "$System.env.TEST_DEPENDENCY_JAR"
+    String gatkJar = "$System.env.GATK_JAR"
+
+    outputs.upToDateWhen { false }  //tests will never be "up to date" so you can always rerun them
+    String TEST_VERBOSITY = "$System.env.TEST_VERBOSITY"
+
+    /**
+     * Valid options for TEST_TYPE are:
+     * cloud, integration, unit  : run one of the three disjoint partitions of the test suite
+     * all                       : run all the tests
+     * anything else             : run the non-cloud tests
+     */
+    String TEST_TYPE = "$System.env.TEST_TYPE"
+
+    useTestNG {
+        if (TEST_TYPE == "cloud") {
+            // run only the cloud tests
+            includeGroups 'cloud', 'bucket'
+        } else if (TEST_TYPE == "integration"){
+            include "**/*IntegrationTest.class"
+            excludeGroups "cloud", "bucket", "python", "funcotatorValidation"
+        } else if (TEST_TYPE == "unit") {
+            exclude "**/*IntegrationTest.class"
+            excludeGroups "cloud", "bucket", "python", "funcotatorValidation"
+        } else if (TEST_TYPE == "spark") {
+            includeGroups "spark"
+            excludeGroups "cloud", "bucket", "python", "funcotatorValidation"
+        } else if (TEST_TYPE == "python") {
+            includeGroups "python"
+        } else if (TEST_TYPE == "all"){
+            //include everything
+        } else {
+            excludeGroups "cloud", "bucket", "python", "funcotatorValidation"
+        }
     }
 
-    from sourceSets.test.output
+    systemProperty "samjdk.use_async_io_read_samtools", "false"
+    systemProperty "samjdk.use_async_io_write_samtools", "true"
+    systemProperty "samjdk.use_async_io_write_tribble", "false"
+    systemProperty "samjdk.compression_level", "2"
+    systemProperty "gatk.spark.debug", System.getProperty("gatk.spark.debug")
+
+    environment "SPARK_LOCAL_IP","127.0.0.1"
+
+    // set heap size for the test JVM(s)
+    minHeapSize = "1G"
+    maxHeapSize = "4G"
+
+    testLogging.showStandardStreams = true
+    beforeTest { descriptor ->
+        logger.lifecycle("Running Test: " + descriptor)
+    }
+
+    // listen to standard out and standard error of the test JVM(s)
+    onOutput { descriptor, event ->
+        logger.lifecycle("Test: " + descriptor + " produced standard out/err: " + event.message )
+    }
+
+    testClassesDir = file("testClasses")
+    classpath = files( gatkJar, testDependencyJar, testClassesJar)
 }
 
 task bundle(type: Zip) {
-    dependsOn shadowJar, sparkJar, testJar, 'condaEnvironmentDefinition', 'gatkTabComplete', 'gatkDoc'
+    dependsOn shadowJar, sparkJar, shadowTestJar, shadowTestClassJar, 'condaEnvironmentDefinition', 'gatkTabComplete', 'gatkDoc'
 
     doFirst {
         assert file("gatk").exists()
@@ -553,7 +627,6 @@ task bundle(type: Zip) {
 
     from(shadowJar.archivePath)
     from(sparkJar.archivePath)
-    from(testJar.archivePath)
     from("gatk")
     from("README.md")
     from("$docBuildDir/tabCompletion/gatk-completion.sh")
