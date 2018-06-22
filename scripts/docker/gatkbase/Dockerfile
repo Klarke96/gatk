@@ -12,15 +12,18 @@ RUN apt-get update && \
 
 # Install some more useful tools
 RUN apt-get install -y \
-# aufs-tools \
-# automake \
-# bedtools \
-# btrfs-tools \
-# build-essential \
-# dpkg-sig \
-# iptables \
-# ##samtools \
- software-properties-common
+    aufs-tools \
+    automake \
+    bedtools \
+    btrfs-tools \
+    build-essential \
+    dpkg-sig \
+    iptables \
+    samtools \
+    software-properties-common && \
+    apt-get clean  && \
+    apt-get autoclean  && \
+    apt-get autoremove
 
 #### Specific for google cloud support
 RUN wget https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.zip \
@@ -37,7 +40,8 @@ RUN yes | gcloud components update preview
 
 # Get OpenJDK8 on here.
 RUN apt-get update && \
-    apt-get install -y openjdk-8-jdk
+    apt-get install -y openjdk-8-jdk && \
+    apt-get clean
 
 # Set environment variables.
 ENV HOME /root
