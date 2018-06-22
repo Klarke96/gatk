@@ -14,6 +14,7 @@ import org.broadinstitute.barclay.argparser.CommandLineException;
 import org.broadinstitute.hellbender.CommandLineProgramTest;
 import org.broadinstitute.hellbender.cmdline.StandardArgumentDefinitions;
 import org.broadinstitute.hellbender.engine.FeatureDataSource;
+import org.broadinstitute.hellbender.tools.genomicsdb.GenomicsDBConstants;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
 import org.broadinstitute.hellbender.utils.Utils;
 import org.broadinstitute.hellbender.utils.io.IOUtils;
@@ -72,7 +73,7 @@ public class GenotypeGVCFsIntegrationTest extends CommandLineProgramTest {
         return new Object[][]{
                 //combine not supported yet, see https://github.com/broadinstitute/gatk/issues/2429 and https://github.com/broadinstitute/gatk/issues/2584
                 //{"combine.single.sample.pipeline.1.vcf", null, Arrays.asList("-V", getTestFile("combine.single.sample.pipeline.2.vcf").toString() , "-V", getTestFile("combine.single.sample.pipeline.3.vcf").toString()), b37_reference_20_21},
-                {getTestFile("leadingDeletion.g.vcf"), getTestFile("leadingDeletionRestrictToStartExpected.vcf"), Arrays.asList("-L", "20:69512-69513", "--"+GenotypeGVCFs.ONLY_OUTPUT_CALLS_STARTING_IN_INTERVALS_FULL_NAME), b37_reference_20_21},
+                /*{getTestFile("leadingDeletion.g.vcf"), getTestFile("leadingDeletionRestrictToStartExpected.vcf"), Arrays.asList("-L", "20:69512-69513", "--"+GenotypeGVCFs.ONLY_OUTPUT_CALLS_STARTING_IN_INTERVALS_FULL_NAME), b37_reference_20_21},
                 {getTestFile("leadingDeletion.g.vcf"), getTestFile("leadingDeletionExpected.vcf"), Arrays.asList("-L", "20:69512-69513"), b37_reference_20_21},
                 {getTestFile(BASE_PAIR_GVCF), getTestFile( BASE_PAIR_EXPECTED), NO_EXTRA_ARGS, b37_reference_20_21}, //base pair level gvcf
                 {getTestFile("testUpdatePGT.gvcf"), getTestFile( "testUpdatePGT.gatk3.7_30_ga4f720357.output.vcf"), NO_EXTRA_ARGS, b37_reference_20_21},   //testUpdatePGT
@@ -98,6 +99,8 @@ public class GenotypeGVCFsIntegrationTest extends CommandLineProgramTest {
                 {getTestFile( "testAlleleSpecificAnnotations.CombineGVCF.output.g.vcf"), getTestFile( "testAlleleSpecificAnnotations.CombineGVCF.expected.g.vcf"), Arrays.asList( "-A", "ClippingRankSumTest", "-G", "AS_StandardAnnotation", "-G", "StandardAnnotation"), b37_reference_20_21},
                 //all sites not supported yet see https://github.com/broadinstitute/gatk-protected/issues/580 and  https://github.com/broadinstitute/gatk/issues/2429
                 //{getTestFile(basePairGVCF), getTestFile( "gvcf.basepairResolution.includeNonVariantSites.gatk3.7_30_ga4f720357.expected.vcf"), Collections.singletonList("--"+GenotypeGVCFs.ALL_SITES_LONG_NAME) //allsites not supported yet
+                //Test for new RAW_MQandDP annotation format   */
+                {getTestFile("../CombineGVCFs/fixMQ.combined.g.vcf"), getTestFile("newMQcalc.combined.genotyped.vcf"), NO_EXTRA_ARGS, b37_reference_20_21},
         };
     }
 
@@ -179,6 +182,24 @@ public class GenotypeGVCFsIntegrationTest extends CommandLineProgramTest {
     public void assertMatchingGenotypesFromTileDB(File input, File expected, Locatable interval, String reference) throws IOException {
         final File tempGenomicsDB = GenomicsDBTestUtils.createTempGenomicsDB(input, interval);
         final String genomicsDBUri = GenomicsDBTestUtils.makeGenomicsDBUri(tempGenomicsDB);
+        runGenotypeGVCFSAndAssertSomething(genomicsDBUri, expected, NO_EXTRA_ARGS, VariantContextTestUtils::assertVariantContextsHaveSameGenotypes, reference);
+    }
+
+    @DataProvider(name="VCFdata")
+    public Object[][] getVCFdata() {
+        return new Object[][]{
+                {new File[]{getTestFile("../CombineGVCFs/YRIoffspring.chr20snippet.g.vcf"), getTestFile("../../haplotypeCaller/expected.testGVCFMode.gatk4.g.vcf")}, getTestFile("newMQcalc.genotyped.vcf"), "20:10000000-10100000", NO_EXTRA_ARGS, b37_reference_20_21}
+        };
+    }
+
+    @Test (dataProvider = "VCFdata")
+    public void assertMatchingGenotypesFromGenomicsDB_vidmapHack(File[] inputs, File expected, String interval, List<String> additionalArguments, String reference) throws IOException {
+        final File tempGenomicsDB = GenomicsDBTestUtils.createTempGenomicsDB(Arrays.asList(inputs), new SimpleInterval(interval));
+        final String genomicsDBUri = GenomicsDBTestUtils.makeGenomicsDBUri(tempGenomicsDB);
+
+        //FIXME: copy in the extra files until Protobuf update in PR #4645 is ready
+        Runtime.getRuntime().exec("cp " + getTestFile("vidmap.updated.json").getAbsolutePath() +" "+ tempGenomicsDB.getAbsolutePath() + "/vidmap.json");
+
         runGenotypeGVCFSAndAssertSomething(genomicsDBUri, expected, NO_EXTRA_ARGS, VariantContextTestUtils::assertVariantContextsHaveSameGenotypes, reference);
     }
 

@@ -88,6 +88,7 @@ public class CombineGVCFsIntegrationTest extends CommandLineProgramTest {
                         getTestFile("gvcfWithTrailingReferenceBlocksBandedExpected.g.vcf"),
                         Arrays.asList("--" + CombineGVCFs.BREAK_BANDS_LONG_NAME, "2000000"),
                         b38_reference_20_21},
+                {new File[]{getTestFile("../../haplotypeCaller/expected.testGVCFMode.gatk4.g.vcf"), getTestFile("YRIoffspring.chr20snippet.g.vcf")}, getTestFile("fixMQ.combined.g.vcf"), NO_EXTRA_ARGS, b37_reference_20_21},
         };
     }
 
