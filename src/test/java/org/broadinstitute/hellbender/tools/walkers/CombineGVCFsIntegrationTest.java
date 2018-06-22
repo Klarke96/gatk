@@ -41,6 +41,7 @@ public class CombineGVCFsIntegrationTest extends CommandLineProgramTest {
     private static final List<String> NO_EXTRA_ARGS = Collections.emptyList();
     private static final List<String> ATTRIBUTES_TO_IGNORE = Arrays.asList(
             "RAW_MQ"); //MQ data format and key have changed since GATK3
+    private static final String NA12878_HG37 = toolsTestDir + "haplotypecaller/expected.testGVCFMode.gatk4.g.vcf";
 
 
     private static <T> void assertForEachElementInLists(final List<T> actual, final List<T> expected, final BiConsumer<T, T> assertion) {
@@ -88,7 +89,7 @@ public class CombineGVCFsIntegrationTest extends CommandLineProgramTest {
                         getTestFile("gvcfWithTrailingReferenceBlocksBandedExpected.g.vcf"),
                         Arrays.asList("--" + CombineGVCFs.BREAK_BANDS_LONG_NAME, "2000000"),
                         b38_reference_20_21},
-                {new File[]{getTestFile("../../haplotypeCaller/expected.testGVCFMode.gatk4.g.vcf"), getTestFile("YRIoffspring.chr20snippet.g.vcf")}, getTestFile("fixMQ.combined.g.vcf"), NO_EXTRA_ARGS, b37_reference_20_21},
+                {new File[]{getTestFile(NA12878_HG37), getTestFile("YRIoffspring.chr20snippet.g.vcf")}, getTestFile("fixMQ.combined.g.vcf"), NO_EXTRA_ARGS, b37_reference_20_21},
         };
     }
 
