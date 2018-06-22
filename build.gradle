@@ -646,10 +646,33 @@ task bundle(type: Zip) {
 }
 
 jacocoTestReport {
-    dependsOn testOnShadowJar
+    dependsOn test
+
     group = "Reporting"
     description = "Generate Jacoco coverage reports after running tests."
     additionalSourceDirs = files(sourceSets.main.allJava.srcDirs)
+
+    reports {
+        xml.enabled = true
+        html.enabled = true
+    }
+}
+
+task jacocoTestReportOnShadowJar(type: JacocoReport){
+    String sourceFiles = "$System.env.SOURCE_DIR"
+
+    executionData testOnShadowJar
+    dependsOn testOnShadowJar
+    sourceSets {
+        main {
+            java {
+                srcDir sourceFiles
+            }
+        }
+    }
+
+    group = "Reporting"
+    description = "Generate Jacoco coverage reports after running tests."
 
     reports {
         xml.enabled = true
