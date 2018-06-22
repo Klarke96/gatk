@@ -551,6 +551,8 @@ task testOnShadowJar(type: Test){
     String testDependencyJar = "$System.env.TEST_DEPENDENCY_JAR"
     String gatkJar = "$System.env.GATK_JAR"
 
+    dependsOn unpackJar
+
     outputs.upToDateWhen { false }  //tests will never be "up to date" so you can always rerun them
     String TEST_VERBOSITY = "$System.env.TEST_VERBOSITY"
 
