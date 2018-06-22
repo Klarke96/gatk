@@ -661,10 +661,10 @@ jacocoTestReport {
 task jacocoTestReportOnShadowJar(type: JacocoReport) {
     String sourceFiles = "$System.env.SOURCE_DIR"
 
-    executionData testOnShadowJar
     dependsOn testOnShadowJar
+    executionData testOnShadowJar
     sourceSets {
-        test {
+        jacocoTestReportOnShadowJar {
             java {
                 srcDir sourceFiles
             }
