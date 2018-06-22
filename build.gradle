@@ -174,18 +174,6 @@ configurations.all {
     all*.exclude group: 'junit', module: 'junit'
 }
 
-//task jacocoTestReportOnShadowJar(type: jacocoTestReport) {
-//    dependsOn testOnShadowJar
-//    group = "Reporting"
-//    description = "Generate Jacoco coverage reports after running tests."
-//    additionalSourceDirs = files(sourceSets.main.allJava.srcDirs)
-//
-//    reports {
-//        xml.enabled = true
-//        html.enabled = true
-//    }
-//}
-
 //NOTE: we ignore contracts for now
 compileJava {
   options.compilerArgs = ['-proc:none', '-Xlint:all', '-Werror', '-Xdiags:verbose']

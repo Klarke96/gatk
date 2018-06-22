@@ -27,6 +27,10 @@ RUN echo "source activate gatk" > /root/run_unit_tests.sh && \
     echo "export TEST_DEPENDENCY_JAR=/jars/\$( find /jars -name \"gatk*testDependencies.jar\" )" >> /root/run_unit_tests.sh && \
     echo "export GATK_JAR=gatk.jar" >> /root/run_unit_tests.sh && \
     echo "export SOURCE_DIR=/gatksrc/src/main/java" >> /root/run_unit_tests.sh && \
+    echo "echo \$TEST_JAR" >> /root/run_unit_tests.sh && \
+    echo "echo \$TEST_DEPENDENCY_JAR" >> /root/run_unit_tests.sh && \
+    echo "echo \$TEST_DEPENDENCY_JAR" >> /root/run_unit_tests.sh && \
+    echo "ls /jars " >> /root/run_unit_tests.sh && \
     echo "cd /gatk/ && /gatksrc/gradlew jacocoTestReportOnShadowJar -a -p /gatksrc" >> /root/run_unit_tests.sh
 
 WORKDIR /root
