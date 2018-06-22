@@ -9,6 +9,7 @@ import htsjdk.samtools.util.FormatUtil;
 import htsjdk.samtools.util.TestUtil;
 import org.broadinstitute.hellbender.cmdline.CommandLineProgram;
 import org.broadinstitute.hellbender.cmdline.StandardArgumentDefinitions;
+import org.broadinstitute.hellbender.testutils.testers.SamFileTester;
 import org.testng.Assert;
 import picard.sam.DuplicationMetrics;
 

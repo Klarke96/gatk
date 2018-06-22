@@ -2,6 +2,7 @@ package org.broadinstitute.hellbender.utils.test;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.broadinstitute.hellbender.testutils.BaseTest;
 import org.broadinstitute.hellbender.utils.runtime.ProcessController;
 
 import java.util.*;

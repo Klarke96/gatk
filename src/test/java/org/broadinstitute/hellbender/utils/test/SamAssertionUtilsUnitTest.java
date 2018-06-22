@@ -2,6 +2,7 @@ package org.broadinstitute.hellbender.utils.test;
 
 import htsjdk.samtools.ValidationStringency;
 import org.broadinstitute.hellbender.GATKBaseTest;
+import org.broadinstitute.hellbender.testutils.SamAssertionUtils;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
