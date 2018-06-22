@@ -1,5 +1,5 @@
 # Using OpenJDK 8
-FROM broadinstitute/gatk:gatkbase-1.2.4
+FROM broadinstitute/gatk:gatkbase-1.2.3
 ARG ZIPPATH
 
 ADD $ZIPPATH /gatk
@@ -27,9 +27,7 @@ RUN echo "source activate gatk" > /root/run_unit_tests.sh && \
     echo "export TEST_DEPENDENCY_JAR=/jars/$( find /jars -name \"gatk*testDependencies.jar\" )" >> /root/run_unit_tests.sh && \
     echo "export GATK_JAR=gatk.jar" >> /root/run_unit_tests.sh && \
     echo "export SOURCE_DIR=/gatksrc/src/main/java" >> /root/run_unit_tests.sh && \
-    echo "cd /gatk/ && /gatksrc/gradlew jacocoTestReportOnShadowJar -a -p /gatksrc -info --debug" >> /root/run_unit_tests.sh
-
-#     echo "cd /gatk/ && /gatksrc/gradlew jacocoTestReport -a -p /gatksrc --stacktrace --debug  --tests *HaplotypeCallerIntegrationTest" >> /root/run_unit_tests.sh
+    echo "cd /gatk/ && /gatksrc/gradlew jacocoTestReportOnShadowJar -a -p /gatksrc" >> /root/run_unit_tests.sh
 
 WORKDIR /root
 RUN cp -r /root/run_unit_tests.sh /gatk
