@@ -393,7 +393,13 @@ public final class GnarlyGenotyper extends VariantWalker {
                                     final Genotype g,
                                     final VariantContext vc) {
         final List<Allele> GTalleles = g.getAlleles();
-        List<Integer> GTallelePositions = vc.getAlleleIndices(GTalleles);  //e.g. {0,1,2} for a REF/ALT0 call, {0,3,5} for a REF/ALT2 call, {0} for a REF/REF call, {2} for a ALT0/ALT0 call
+        final List<Integer> GTallelePositions = new ArrayList<>();
+        final int[] x = vc.getGLIndecesOfAlternateAllele(GTalleles.get(0));
+        GTallelePositions.addAll(Arrays.stream(x).boxed().collect(Collectors.toList()));  //e.g. {0,1,2} for a REF/ALT0 call, {0,3,5} for a REF/ALT2 call, {0} for a REF/REF call, {2} for a ALT0/ALT0 call
+        final int[] y = vc.getGLIndecesOfAlternateAllele(GTalleles.get(1));
+        GTallelePositions.addAll(Arrays.stream(y).boxed().collect(Collectors.toList()));  //e.g. {0,1,2} for a REF/ALT0 call, {0,3,5} for a REF/ALT2 call, {0} for a REF/REF call, {2} for a ALT0/ALT0 call
+
+
         final int[] PLs = g.getPL();
         //ABGQ is for GTs where both alleleIndex1 and alleleIndex2 are in GTallelePositions
         //ALTGQ is for GTs where not both alleleIndex1 and alleleIndex2 are in GTallelePositions
@@ -412,9 +418,6 @@ public final class GnarlyGenotyper extends VariantWalker {
         }
         //ABGQ can be any position that has the homozygous allele
         else {
-            if (GTallelePositions.size() > 1) {
-                throw new IllegalStateException("Genotype " + g + " is non-heterozygous but contains more than one allele. Is this a non-diploid sample?");
-            }
             for (int i = 0; i < PLs.length; i++) {
                 boolean match1 = false;
                 boolean match2 = false;

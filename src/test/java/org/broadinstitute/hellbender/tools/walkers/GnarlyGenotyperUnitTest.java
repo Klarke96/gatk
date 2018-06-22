@@ -50,7 +50,7 @@ public class GnarlyGenotyperUnitTest {
         //For BC ALTGQ should be the best of B filtered out (AA, AC, CC) or C filtered out (AA, AB, BB) -- anything except BC
 
 
-        /*checkIntAttribute(g5, vc, "ABGQ", 45);
+        checkIntAttribute(g5, vc, "ABGQ", 45);
         checkIntAttribute(g5, vc, "ALTGQ", 90);
         checkIntAttribute(g6, vc, "ABGQ", 45);
         checkIntAttribute(g6, vc, "ALTGQ", 30);
@@ -59,7 +59,7 @@ public class GnarlyGenotyperUnitTest {
         checkIntAttribute(g1, vc, "ALTGQ", 30);
         checkIntAttribute(g2, vc, "ABGQ", 30);
         checkIntAttribute(g2, vc, "ALTGQ", 30);
-        checkIntAttribute(g3, vc, "ABGQ", 30); */
+        checkIntAttribute(g3, vc, "ABGQ", 30);
         checkIntAttribute(g3, vc, "ALTGQ", 90);
         checkIntAttribute(g4, vc, "ABGQ", 60);
         checkIntAttribute(g4, vc, "ALTGQ", 30);
