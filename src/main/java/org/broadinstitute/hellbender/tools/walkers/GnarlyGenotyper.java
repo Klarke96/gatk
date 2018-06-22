@@ -392,22 +392,22 @@ public final class GnarlyGenotyper extends VariantWalker {
     public static void summarizePLs(final GenotypeBuilder gb,
                                     final Genotype g,
                                     final VariantContext vc) {
-        final List<Allele> GTalleles = g.getAlleles();
-        final List<Integer> GTallelePositions = new ArrayList<>();
-        final int[] x = vc.getGLIndecesOfAlternateAllele(GTalleles.get(0));
-        GTallelePositions.addAll(Arrays.stream(x).boxed().collect(Collectors.toList()));  //e.g. {0,1,2} for a REF/ALT0 call, {0,3,5} for a REF/ALT2 call, {0} for a REF/REF call, {2} for a ALT0/ALT0 call
-        final int[] y = vc.getGLIndecesOfAlternateAllele(GTalleles.get(1));
-        GTallelePositions.addAll(Arrays.stream(y).boxed().collect(Collectors.toList()));  //e.g. {0,1,2} for a REF/ALT0 call, {0,3,5} for a REF/ALT2 call, {0} for a REF/REF call, {2} for a ALT0/ALT0 call
+        final List<Allele> calledAlleles = g.getAlleles();
+        final List<Integer> calledAllelePLPositions = new ArrayList<>();
+        final int[] x = vc.getGLIndecesOfAlternateAllele(calledAlleles.get(0));
+        calledAllelePLPositions.addAll(Arrays.stream(x).boxed().collect(Collectors.toList()));  //e.g. {0,1,2} for a REF/ALT0 call, {0,3,5} for a REF/ALT2 call, {0} for a REF/REF call, {2} for a ALT0/ALT0 call
+        final int[] y = vc.getGLIndecesOfAlternateAllele(calledAlleles.get(1));
+        calledAllelePLPositions.addAll(Arrays.stream(y).boxed().collect(Collectors.toList()));  //e.g. {0,1,2} for a REF/ALT0 call, {0,3,5} for a REF/ALT2 call, {0} for a REF/REF call, {2} for a ALT0/ALT0 call
 
 
         final int[] PLs = g.getPL();
-        //ABGQ is for GTs where both alleleIndex1 and alleleIndex2 are in GTallelePositions
-        //ALTGQ is for GTs where not both alleleIndex1 and alleleIndex2 are in GTallelePositions
+        //ABGQ is for GTs where both alleleIndex1 and alleleIndex2 are in calledAllelePLPositions
+        //ALTGQ is for GTs where not both alleleIndex1 and alleleIndex2 are in calledAllelePLPositions
         int ABGQ = Integer.MAX_VALUE;
         int ALTGQ = Integer.MAX_VALUE;
 
         if (g.isHet()) {
-            for (int i : GTallelePositions) {
+            for (int i : calledAllelePLPositions) {
                 if (PLs[i] == 0) {
                     continue;
                 }
@@ -415,6 +415,7 @@ public final class GnarlyGenotyper extends VariantWalker {
                     ABGQ = PLs[i];
                 }
             }
+            //TODO: ALTGQ is the GQ over the PLs with each called allele subset out
         }
         //ABGQ can be any position that has the homozygous allele
         else {
@@ -425,11 +426,11 @@ public final class GnarlyGenotyper extends VariantWalker {
                     continue;
                 }
                 //all this is matching alleles based on their index in vc.getAlleles()
-                GenotypeLikelihoods.GenotypeLikelihoodsAllelePair PLalleleIndexes = GenotypeLikelihoods.getAllelePair(i); //this call assumes ASSUMED_PLOIDY is 2 (diploid)
-                if (GTallelePositions.contains(PLalleleIndexes.alleleIndex1)) {
+                GenotypeLikelihoods.GenotypeLikelihoodsAllelePair PLalleleAltArrayIndexes = GenotypeLikelihoods.getAllelePair(i); //this call assumes ASSUMED_PLOIDY is 2 (diploid)
+                if (calledAllelePLPositions.contains(PLalleleAltArrayIndexes.alleleIndex1)) {
                     match1 = true;
                 }
-                if (GTallelePositions.contains(PLalleleIndexes.alleleIndex2)) {
+                if (calledAllelePLPositions.contains(PLalleleAltArrayIndexes.alleleIndex2)) {
                     match2 = true;
                 }
                 if (match1 || match2) {
