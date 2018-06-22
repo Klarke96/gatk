@@ -393,12 +393,7 @@ public final class GnarlyGenotyper extends VariantWalker {
                                     final Genotype g,
                                     final VariantContext vc) {
         final List<Allele> calledAlleles = g.getAlleles();
-        final List<Integer> calledAllelePLPositions = new ArrayList<>();
-        final int[] x = vc.getGLIndecesOfAlternateAllele(calledAlleles.get(0));
-        calledAllelePLPositions.addAll(Arrays.stream(x).boxed().collect(Collectors.toList()));  //e.g. {0,1,2} for a REF/ALT0 call, {0,3,5} for a REF/ALT2 call, {0} for a REF/REF call, {2} for a ALT0/ALT0 call
-        final int[] y = vc.getGLIndecesOfAlternateAllele(calledAlleles.get(1));
-        calledAllelePLPositions.addAll(Arrays.stream(y).boxed().collect(Collectors.toList()));  //e.g. {0,1,2} for a REF/ALT0 call, {0,3,5} for a REF/ALT2 call, {0} for a REF/REF call, {2} for a ALT0/ALT0 call
-
+        final List<Integer> calledAllelePLPositions = getPLindicesForAlleles(vc, calledAlleles);
 
         final int[] PLs = g.getPL();
         //ABGQ is for GTs where both alleleIndex1 and alleleIndex2 are in calledAllelePLPositions
@@ -415,7 +410,6 @@ public final class GnarlyGenotyper extends VariantWalker {
                     ABGQ = PLs[i];
                 }
             }
-            //TODO: ALTGQ is the GQ over the PLs with each called allele subset out
         }
         //ABGQ can be any position that has the homozygous allele
         else {
@@ -441,6 +435,36 @@ public final class GnarlyGenotyper extends VariantWalker {
             }
             if (g.isHomRef()) {
                 ALTGQ = ABGQ;
+            }
+        }
+
+        //TODO: ALTGQ is the GQ over the PLs with each called allele subset out
+        if (!g.isHomRef()) {
+            final Set<Allele> comparisonAlleles = new HashSet<>(vc.getAlleles());
+            List<Integer> comparisonAllelePLPositions = new ArrayList<>();
+            if (!g.getAllele(0).isReference()) {
+                comparisonAlleles.remove(g.getAllele(0));
+                comparisonAllelePLPositions = getPLindicesForAlleles(vc, new ArrayList<>(comparisonAlleles));
+                for (final int i : comparisonAllelePLPositions) {
+                    if (PLs[i] == 0) {
+                        continue;
+                    }
+                    else if (PLs[i] < ALTGQ) {
+                        ALTGQ = PLs[i];
+                    }
+                }
+                comparisonAlleles.add(g.getAllele(0));
+            }
+            if (!g.getAllele(1).isReference()) {
+                comparisonAlleles.remove(g.getAllele(1));
+                comparisonAllelePLPositions = getPLindicesForAlleles(vc, new ArrayList<>(comparisonAlleles));
+                for (final int i : comparisonAllelePLPositions) {
+                    if (PLs[i] == 0) {
+                        continue;
+                    } else if (PLs[i] < ALTGQ) {
+                        ALTGQ = PLs[i];
+                    }
+                }
             }
         }
 
@@ -471,6 +495,17 @@ public final class GnarlyGenotyper extends VariantWalker {
         final int[] newADs = new int[newAlleleNumber];
         System.arraycopy(oldADs, 0, newADs, 0, newAlleleNumber);
         return newADs;
+    }
+
+    //e.g. {0,1,2} for a REF/ALT0 call, {0,3,5} for a REF/ALT2 call, {0} for a REF/REF call, {2} for a ALT0/ALT0 call
+    private static List<Integer> getPLindicesForAlleles(final VariantContext vc, final List<Allele> calledAlleles) {
+        final List<Integer> calledAllelePLPositions = new ArrayList<>();
+        for (final Allele a : calledAlleles) {
+            final int[] x = vc.getGLIndecesOfAlternateAllele(a);
+            calledAllelePLPositions.addAll(Arrays.stream(x).boxed().collect(Collectors.toList()));
+        }
+        return calledAllelePLPositions.stream().distinct().collect(Collectors.toList());
+
     }
 
     @Override

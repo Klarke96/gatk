@@ -22,10 +22,10 @@ public class GnarlyGenotyperUnitTest {
         final int[] homRefPLs1 = {0, 30, 60, 90, 200, 210};  //made up values, but all unique
         final int[] homRefPLs2 = {0, 90, 210, 30, 200, 220};
         final int[] homVarPLs1 = {60, 30, 0, 200, 90, 210};
-        final int[] homVarPLs2 = {220, 210, 200, 0, 30, 60};
-        final int[] ABHetPLs = {45, 0, 46, 90, 91, 200};
-        final int[] ACHetPLs = {45, 90, 200, 0, 30, 46};
-        final int[] BCHetPLs = {200, 90, 60, 61, 0, 45};
+        final int[] homVarPLs2 = {210, 200, 90, 30, 150, 0};
+        final int[] ABHetPLs = {46, 0, 45, 90, 91, 200};
+        final int[] ACHetPLs = {46, 90, 200, 0, 30, 45};
+        final int[] BCHetPLs = {200, 90, 60, 85, 0, 61};
 
         final Genotype g1 = VariantContextTestUtils.makeG("g1", Aref, Aref, homRefPLs1);
         final Genotype g2 = VariantContextTestUtils.makeG("g2", Aref, Aref, homRefPLs2);
@@ -49,23 +49,20 @@ public class GnarlyGenotyperUnitTest {
         //For BC ABGQ should be the best of BB, CC
         //For BC ALTGQ should be the best of B filtered out (AA, AC, CC) or C filtered out (AA, AB, BB) -- anything except BC
 
-
-        checkIntAttribute(g5, vc, "ABGQ", 45);
-        checkIntAttribute(g5, vc, "ALTGQ", 90);
-        checkIntAttribute(g6, vc, "ABGQ", 45);
-        checkIntAttribute(g6, vc, "ALTGQ", 30);
-
         checkIntAttribute(g1, vc, "ABGQ", 30);
         checkIntAttribute(g1, vc, "ALTGQ", 30);
         checkIntAttribute(g2, vc, "ABGQ", 30);
         checkIntAttribute(g2, vc, "ALTGQ", 30);
         checkIntAttribute(g3, vc, "ABGQ", 30);
-        checkIntAttribute(g3, vc, "ALTGQ", 90);
-        checkIntAttribute(g4, vc, "ABGQ", 60);
-        checkIntAttribute(g4, vc, "ALTGQ", 30);
-
-        checkIntAttribute(g7, vc, "ABGQ", 45);
-        checkIntAttribute(g7, vc, "ALTGQ", 61); //alt GQ for het-non-ref is a GQ with one allele matching and one not, i.e. we got one alt wrong
+        checkIntAttribute(g3, vc, "ALTGQ", 60);
+        checkIntAttribute(g4, vc, "ABGQ", 30);
+        checkIntAttribute(g4, vc, "ALTGQ", 90);
+        checkIntAttribute(g5, vc, "ABGQ", 45);
+        checkIntAttribute(g5, vc, "ALTGQ", 46);
+        checkIntAttribute(g6, vc, "ABGQ", 45);
+        checkIntAttribute(g6, vc, "ALTGQ", 46);
+        checkIntAttribute(g7, vc, "ABGQ", 60);
+        checkIntAttribute(g7, vc, "ALTGQ", 60);
     }
 
     /**
