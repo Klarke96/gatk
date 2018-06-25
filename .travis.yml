@@ -130,6 +130,7 @@ script:
     rm -Rf src/test/resources/large/VQSR;
     echo "Running M2 WDL";
     sudo bash scripts/m2_cromwell_tests/run_m2_wdl.sh;
+    find /home/travis/build/broadinstitute/gatk/scripts/cnv_cromwell_tests/;
   elif [[ $TEST_DOCKER == true ]]; then
     echo "Building docker image and running appropriate tests..." ;
     if [ ${TRAVIS_PULL_REQUEST} != false ]; then
