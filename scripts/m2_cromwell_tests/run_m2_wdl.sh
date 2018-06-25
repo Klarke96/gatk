@@ -4,7 +4,7 @@ set -e
 script_path=$( cd "$(dirname "${BASH_SOURCE}")" ; pwd -P )
 cd "$script_path"
 
-#WORKING_DIR=/Users/emeryj/hellbender
+WORKING_DIR=/home/travis/build/broadinstitute
 
 set -e
 echo "Building docker image for M2 WDL tests (skipping unit tests)..."
