@@ -127,7 +127,9 @@ script:
   elif [[ $RUN_CNV_SOMATIC_WDL == true ]]; then
     echo "Running CNV somatic workflows";
     bash scripts/cnv_cromwell_tests/somatic/run_cnv_somatic_workflows.sh;
-    cat ${find /home/travis/build/broadinstitute/gatk/scripts/ -n "*stderr"};
+    echo "printing out the stederr"
+    cat ${find /home/travis/build/broadinstitute/cromwell-executions/Mutect2_Multi/ -name "*stderr"};
+    cat ${find /git  -name "*stderr"};
   elif [[ $RUN_M2_WDL == true ]]; then
     echo "Deleting some unused files before running M2 WDL...";
     rm -Rf src/test/resources/large/VQSR;
