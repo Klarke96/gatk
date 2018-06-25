@@ -2,6 +2,7 @@ package org.broadinstitute.hellbender.tools.spark.sv.utils;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.function.Function;
 import org.apache.spark.broadcast.Broadcast;
 import org.broadinstitute.barclay.argparser.Argument;
 import org.broadinstitute.barclay.argparser.BetaFeature;
@@ -68,6 +69,10 @@ public final class ExtractOriginalAlignmentRecordsByNameSpark extends GATKSparkT
     @Argument(doc = "file containing list of read names", fullName = "read-name-file")
     private String readNameFile;
 
+    @Argument(doc = "revert the list, i.e. filter out reads whose name appear in the give file",
+            shortName = "v", fullName = "invert-match", optional = true)
+    private Boolean invertFilter = false;
+
     @Argument(doc = "file to write reads to", shortName = StandardArgumentDefinitions.OUTPUT_SHORT_NAME,
             fullName = StandardArgumentDefinitions.OUTPUT_LONG_NAME)
     private String outputSAM;
@@ -82,12 +87,19 @@ public final class ExtractOriginalAlignmentRecordsByNameSpark extends GATKSparkT
 
         final Broadcast<Set<String>> namesToLookForBroadcast = ctx.broadcast(parseReadNames());
 
-        final JavaRDD<GATKRead> reads =
-                getUnfilteredReads().filter(read -> namesToLookForBroadcast.getValue().contains(read.getName())).cache();
+        final Function<GATKRead, Boolean> predicate = getGatkReadBooleanFunction(namesToLookForBroadcast);
+
+        final JavaRDD<GATKRead> reads = getUnfilteredReads().filter(predicate).cache();
         writeReads(ctx, outputSAM, reads);
 
         logger.info("Found " + reads.count() + " alignment records for " +
                     namesToLookForBroadcast.getValue().size() + " unique read names.");
+    }
+
+    private Function<GATKRead, Boolean> getGatkReadBooleanFunction(final Broadcast<Set<String>> namesToLookForBroadcast) {
+        return invertFilter
+                ? read -> !namesToLookForBroadcast.getValue().contains(read.getName())
+                : read -> namesToLookForBroadcast.getValue().contains(read.getName());
     }
 
     private Set<String> parseReadNames() {
