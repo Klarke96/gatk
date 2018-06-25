@@ -23,8 +23,8 @@ WORKDIR /gatk
 # Create a simple unit test runner
 ENV CI true
 RUN echo "source activate gatk" > /root/run_unit_tests.sh && \
-    echo "export TEST_JAR=/jars/\$( find /jars -name \"gatk*test.jar\" )" >> /root/run_unit_tests.sh && \
-    echo "export TEST_DEPENDENCY_JAR=/jars/\$( find /jars -name \"gatk*testDependencies.jar\" )" >> /root/run_unit_tests.sh && \
+    echo "export TEST_JAR=\$( find /jars -name \"gatk*test.jar\" )" >> /root/run_unit_tests.sh && \
+    echo "export TEST_DEPENDENCY_JAR=\$( find /jars -name \"gatk*testDependencies.jar\" )" >> /root/run_unit_tests.sh && \
     echo "export GATK_JAR=gatk.jar" >> /root/run_unit_tests.sh && \
     echo "export SOURCE_DIR=/gatksrc/src/main/java" >> /root/run_unit_tests.sh && \
     echo "echo \$TEST_JAR" >> /root/run_unit_tests.sh && \
