@@ -22,6 +22,7 @@ import org.broadinstitute.hellbender.tools.funcotator.vcfOutput.VcfOutputRendere
 import org.broadinstitute.hellbender.utils.SimpleInterval;
 import org.broadinstitute.hellbender.utils.codecs.gencode.GencodeGtfFeature;
 import org.broadinstitute.hellbender.utils.codecs.xsvLocatableTable.XsvTableFeature;
+import org.broadinstitute.hellbender.utils.config.ConfigFactory;
 import org.broadinstitute.hellbender.utils.io.IOUtils;
 import picard.cmdline.programgroups.VariantEvaluationProgramGroup;
 
@@ -234,6 +235,7 @@ public class Funcotator extends VariantWalker {
 
     @Argument(
             fullName =  FuncotatorArgumentDefinitions.DATA_SOURCES_PATH_LONG_NAME,
+            mutex = {FuncotatorArgumentDefinitions.CONFIG_FILE_ARG_LONG_NAME},
             doc = "The path to a data source folder for Funcotator.  May be specified more than once to handle multiple data source folders."
     )
     private List<String> dataSourceDirectories;
@@ -244,19 +246,37 @@ public class Funcotator extends VariantWalker {
     )
     private FuncotatorArgumentDefinitions.OutputFormatType outputFormatType;
 
+    @Argument(
+            fullName =  FuncotatorArgumentDefinitions.CONFIG_FILE_ARG_LONG_NAME,
+            mutex = {
+                    FuncotatorArgumentDefinitions.DATA_SOURCES_PATH_LONG_NAME,
+                    FuncotatorArgumentDefinitions.REMOVE_FILTERED_VARIANTS_LONG_NAME,
+                    FuncotatorArgumentDefinitions.TRANSCRIPT_SELECTION_MODE_LONG_NAME,
+                    FuncotatorArgumentDefinitions.TRANSCRIPT_LIST_LONG_NAME,
+                    FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME,
+                    FuncotatorArgumentDefinitions.ANNOTATION_OVERRIDES_LONG_NAME,
+                    FuncotatorArgumentDefinitions.ALLOW_HG19_GENCODE_B37_CONTIG_MATCHING_LONG_NAME,
+                    FuncotatorArgumentDefinitions.LOOKAHEAD_CACHE_IN_BP_ARG_NAME,
+            },
+            doc = "The output file format.  Either VCF or MAF.  Please note that MAF output for germline use case VCFs is unsupported."
+    )
+    private String configurationFilePath = null;
+
     //-----------------------------------------------------
     // Optional args:
 
     @Argument(
             fullName = FuncotatorArgumentDefinitions.REMOVE_FILTERED_VARIANTS_LONG_NAME,
             optional = true,
+            mutex = {FuncotatorArgumentDefinitions.CONFIG_FILE_ARG_LONG_NAME},
             doc = "Ignore/drop variants that have been filtered in the input.  These variants will not appear in the output file."
     )
-    private boolean removeFilteredVariants = false;
+    private boolean removeFilteredVariants = FuncotatorArgumentDefinitions.REMOVE_FILTERED_VARIANTS_DEFAULT_VALUE;
 
     @Argument(
             fullName  = FuncotatorArgumentDefinitions.TRANSCRIPT_SELECTION_MODE_LONG_NAME,
             optional = true,
+            mutex = {FuncotatorArgumentDefinitions.CONFIG_FILE_ARG_LONG_NAME},
             doc = "Method of detailed transcript selection.  This will select the transcript for detailed annotation (CANONICAL, ALL, or BEST_EFFECT)."
     )
     private TranscriptSelectionMode transcriptSelectionMode = FuncotatorArgumentDefinitions.TRANSCRIPT_SELECTION_MODE_DEFAULT_VALUE;
@@ -264,6 +284,7 @@ public class Funcotator extends VariantWalker {
     @Argument(
             fullName  = FuncotatorArgumentDefinitions.TRANSCRIPT_LIST_LONG_NAME,
             optional = true,
+            mutex = {FuncotatorArgumentDefinitions.CONFIG_FILE_ARG_LONG_NAME},
             doc = "File to use as a list of transcripts (one transcript ID per line, version numbers are ignored) OR A set of transcript IDs to use for annotation to override selected transcript."
     )
     private Set<String> userTranscriptIdSet = new HashSet<>();
@@ -271,6 +292,7 @@ public class Funcotator extends VariantWalker {
     @Argument(
             fullName  = FuncotatorArgumentDefinitions.ANNOTATION_DEFAULTS_LONG_NAME,
             optional = true,
+            mutex = {FuncotatorArgumentDefinitions.CONFIG_FILE_ARG_LONG_NAME},
             doc = "Annotations to include in all annotated variants if the annotation is not specified in the data sources (in the format <ANNOTATION>:<VALUE>).  This will add the specified annotation to every annotated variant if it is not already present."
     )
     private List<String> annotationDefaults = new ArrayList<>();
@@ -278,6 +300,7 @@ public class Funcotator extends VariantWalker {
     @Argument(
             fullName  = FuncotatorArgumentDefinitions.ANNOTATION_OVERRIDES_LONG_NAME,
             optional = true,
+            mutex = {FuncotatorArgumentDefinitions.CONFIG_FILE_ARG_LONG_NAME},
             doc = "Override values for annotations (in the format <ANNOTATION>:<VALUE>).  Replaces existing annotations of the given name with given values."
     )
     private List<String> annotationOverrides = new ArrayList<>();
@@ -285,14 +308,16 @@ public class Funcotator extends VariantWalker {
     @Argument(
             fullName = FuncotatorArgumentDefinitions.ALLOW_HG19_GENCODE_B37_CONTIG_MATCHING_LONG_NAME,
             optional = true,
+            mutex = {FuncotatorArgumentDefinitions.CONFIG_FILE_ARG_LONG_NAME},
             doc = "Allow for the HG19 Reference version of GENCODE (or any other datasource) to match with B37 Contig names.  (May create erroneous annotations in some contigs where B37 != HG19)."
     )
     private boolean allowHg19ContigNamesWithB37 = true;
 
     @Argument(
-            fullName = FuncotatorArgumentDefinitions.LOOKAHEAD_CACHE_IN_BP_NAME,
+            fullName = FuncotatorArgumentDefinitions.LOOKAHEAD_CACHE_IN_BP_ARG_NAME,
             optional = true,
             minValue = 0,
+            mutex = {FuncotatorArgumentDefinitions.CONFIG_FILE_ARG_LONG_NAME},
             doc = "Number of base-pairs to cache when querying variants."
     )
     private int lookaheadFeatureCachingInBp = FuncotatorArgumentDefinitions.LOOKAHEAD_CACHE_IN_BP_DEFAULT_VALUE;
@@ -330,7 +355,12 @@ public class Funcotator extends VariantWalker {
     @Override
     public void onTraversalStart() {
 
-        // First set up our transcript list:
+        // First process our configuration file (if we have one):
+        if ( configurationFilePath != null ) {
+            initializeArgumentsFromConfigurationFile();
+        }
+
+        // Now set up our transcript list:
         userTranscriptIdSet = processTranscriptList(userTranscriptIdSet);
 
         final LinkedHashMap<String, String> annotationDefaultsMap = splitAnnotationArgsIntoMap(annotationDefaults);
@@ -426,6 +456,33 @@ public class Funcotator extends VariantWalker {
     }
 
     //==================================================================================================================
+
+    /**
+     * Initializes the arguments of this instance of {@link Funcotator} with the contents of the specified configuration
+     * file.
+     */
+    private void initializeArgumentsFromConfigurationFile() {
+
+        // Ensure the configuration file exists:
+        final Path configPath = IOUtils.getPath(configurationFilePath);
+        if ( ! Files.exists(configPath) ) {
+            throw new UserException.CouldNotReadInputFile("Configuration file does not exist: " + configPath.toUri().toString());
+        }
+
+        // Load configuration File
+        final FuncotatorConfig config = ConfigFactory.getInstance().getOrCreateConfigFromFile(
+                configurationFilePath,
+                FuncotatorConfig.class,
+                FuncotatorConfig.CONFIG_FILE_VARIABLE_FILE_NAME);
+
+        dataSourceDirectories = config.dataSourceDirectories();
+        removeFilteredVariants = config.removeFilteredVariants();
+        transcriptSelectionMode = config.transcriptSelectionMode();
+        userTranscriptIdSet = config.transcriptList();
+        annotationDefaults = config.annotationDefaults();
+        annotationOverrides = config.annotationOverrides();
+        lookaheadFeatureCachingInBp = config.lookaheadCacheSize();
+    }
 
     /**
      * Creates a {@link LinkedHashMap} of annotations in the given {@code annotationMap} that do not occur in the given {@code dataSourceFactories}.
