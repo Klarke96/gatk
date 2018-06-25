@@ -1,4 +1,4 @@
-package org.broadinstitute.hellbender.utils.test;
+package org.broadinstitute.hellbender.testutils;
 
 import htsjdk.variant.variantcontext.*;
 import htsjdk.variant.vcf.VCFHeader;
