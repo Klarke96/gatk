@@ -189,7 +189,7 @@ public class GenotypeGVCFsIntegrationTest extends CommandLineProgramTest {
     @DataProvider(name="VCFdata")
     public Object[][] getVCFdata() {
         return new Object[][]{
-                {new File[]{getTestFile("../CombineGVCFs/YRIoffspring.chr20snippet.g.vcf"), getTestFile("../../haplotypeCaller/expected.testGVCFMode.gatk4.g.vcf")}, getTestFile("newMQcalc.genotyped.vcf"), "20:10000000-10100000", NO_EXTRA_ARGS, b37_reference_20_21}
+                {new File[]{getTestFile("../CombineGVCFs/YRIoffspring.chr20snippet.g.vcf"), NA12878_HG37}, getTestFile("newMQcalc.genotyped.vcf"), "20:10000000-10100000", NO_EXTRA_ARGS, b37_reference_20_21}
         };
     }
 
