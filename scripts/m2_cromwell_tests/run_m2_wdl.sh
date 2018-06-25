@@ -19,7 +19,7 @@ if [ ${TRAVIS_PULL_REQUEST} != false ]; then
   HASH_TO_USE=FETCH_HEAD
   sudo bash build_docker.sh  -e ${HASH_TO_USE} -s -u -d $PWD/temp_staging/ -t ${TRAVIS_PULL_REQUEST};
 else
-  HASH_TO_USE= ${TRAVIS_COMMIT};
+  HASH_TO_USE=${TRAVIS_COMMIT}
   sudo bash build_docker.sh  -e ${HASH_TO_USE} -s -u -d $PWD/temp_staging/;
 fi
 echo "Docker build done =========="
